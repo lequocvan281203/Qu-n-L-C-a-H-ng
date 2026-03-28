@@ -1,9 +1,17 @@
 package com.cuahang.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "TaiKhoan")
+@Getter
+@Setter
+/**
+ * Thực thể Tài khoản (bảng TaiKhoan).
+ * Dùng để đăng nhập hệ thống và phân quyền (Admin/User).
+ */
 public class TaiKhoan {
     @Id
     @Column(name = "Username", length = 50)

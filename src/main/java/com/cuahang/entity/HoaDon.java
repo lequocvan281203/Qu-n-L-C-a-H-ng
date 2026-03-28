@@ -3,9 +3,17 @@ package com.cuahang.entity;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "HoaDon")
+@Getter
+@Setter
+/**
+ * Thực thể Hóa đơn (bảng HoaDon).
+ * Lưu thông tin thời điểm lập, tổng tiền, trạng thái và liên kết khách hàng/nhân viên.
+ */
 public class HoaDon {
     @Id
     @Column(name = "MaHD", length = 50)

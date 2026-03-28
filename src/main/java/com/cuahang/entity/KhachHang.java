@@ -10,6 +10,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "KhachHang") // Tên bảng sẽ được tạo trong MySQL
+/**
+ * Thực thể Khách hàng (bảng KhachHang).
+ * Lưu thông tin khách hàng và điểm tích lũy; có thể phát sinh nhiều hóa đơn.
+ */
 public class KhachHang {
 
     @Id // Đánh dấu đây là Khóa chính (Primary Key)

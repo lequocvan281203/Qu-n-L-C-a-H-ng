@@ -3,9 +3,17 @@ package com.cuahang.entity;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "NhanVien")
+@Getter
+@Setter
+/**
+ * Thực thể Nhân viên (bảng NhanVien).
+ * Lưu thông tin nhân viên, có thể gắn 1 tài khoản đăng nhập và phát sinh nhiều hóa đơn.
+ */
 public class NhanVien {
     @Id
     @Column(name = "MaNV", length = 50)

@@ -6,7 +6,7 @@
     <session-factory>
         <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
         
-        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/quanlycuahang?useSSL=false&amp;serverTimezone=UTC</property>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/quanlycuahang?useSSL=false&amp;serverTimezone=UTC&amp;useUnicode=true&amp;characterEncoding=utf8</property>
         <property name="hibernate.connection.username">root</property>
         <property name="hibernate.connection.password">123456</property>
 
@@ -15,6 +15,15 @@
         <property name="hibernate.format_sql">true</property>
         
         <property name="hibernate.hbm2ddl.auto">update</property>
+
+        <mapping class="com.cuahang.entity.SanPham"/>
+        <mapping class="com.cuahang.entity.LoaiSanPham"/>
+        <mapping class="com.cuahang.entity.NhaCungCap"/>
+        <mapping class="com.cuahang.entity.KhachHang"/>
+        <mapping class="com.cuahang.entity.NhanVien"/>
+        <mapping class="com.cuahang.entity.TaiKhoan"/>
+        <mapping class="com.cuahang.entity.HoaDon"/>
+        <mapping class="com.cuahang.entity.ChiTietHoaDon"/>
 
         </session-factory>
 </hibernate-configuration>
