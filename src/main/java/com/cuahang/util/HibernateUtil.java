@@ -1,6 +1,7 @@
 package com.cuahang.util;
 
 import java.util.Properties;
+import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
@@ -29,6 +30,13 @@ public class HibernateUtil {
     }
 
     public static void shutdown() {
-        getSessionFactory().close();
+        try {
+            getSessionFactory().close();
+        } finally {
+            try {
+                AbandonedConnectionCleanupThread.checkedShutdown();
+            } catch (Exception ignored) {
+            }
+        }
     }
 }

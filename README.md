@@ -45,9 +45,15 @@
 - Model đang dùng: `qwen2.5-1.5b-instruct-q5_k_m.gguf`
 - Đặt file vào thư mục dự án: `Qu-n-L-C-a-H-ng/models/qwen2.5-1.5b-instruct-q5_k_m.gguf`
 - Link tải: `https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/tree/main?show_file_info=qwen2.5-1.5b-instruct-q5_k_m.gguf`
+- App có thể tự hỏi để tải model về lần đầu chạy (file ~1.3GB, tải vào `models/`).
 - Mặc định app sẽ tìm file `.gguf` trong `models/` (trong thư mục dự án). Ngoài ra vẫn hỗ trợ `../models` và `_workspace/models/`.
 - Hoặc chỉ định đường dẫn model bằng system property khi chạy:
   - `.\\mvnw.cmd -Dexec.mainClass=com.cuahang.main.MainApp -Dcuahang.modelPath="D:\\path\\to\\model.gguf" exec:java`
+
+## Build bản portable (cài đặt)
+- Yêu cầu: JDK 22 (có `jpackage`).
+- Chạy: `BUILD_PORTABLE_APP.bat`
+- Output: `dist/QuanLyCuaHang/` (mang đi copy máy khác chạy).
 
 ## Kế hoạch triển khai
 - File chi tiết: [_workspace/plan/Kế hoạch Code Chi tiết.md](file:///d:/desktop/ltr%20win/Quan-ly-cua-hang/_workspace/plan/K%E1%BA%BF%20ho%E1%BA%A1ch%20Code%20Chi%20ti%E1%BA%BFt.md)

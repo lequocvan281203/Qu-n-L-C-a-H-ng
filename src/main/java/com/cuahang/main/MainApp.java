@@ -2,8 +2,11 @@ package com.cuahang.main;
 
 import com.cuahang.view.LoginView;
 import com.cuahang.service.BootstrapService;
+import com.cuahang.service.DemoDataService;
+import com.cuahang.service.ModelDownloadService;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.sql.SQLException;
+import java.nio.file.Path;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.hibernate.Session;
@@ -24,6 +27,18 @@ public class MainApp {
                         JOptionPane.INFORMATION_MESSAGE
                     );
                 }
+
+                boolean demoDataCreated = new DemoDataService().ensureDemoData();
+                if (demoDataCreated) {
+                    JOptionPane.showMessageDialog(
+                        null,
+                        "Đã tạo dữ liệu demo (sản phẩm/khách hàng/nhân viên) để test nhanh.",
+                        "Dữ liệu demo",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
+
+                new ModelDownloadService().ensureModelPresent(Path.of("models"));
                 new LoginView().setVisible(true);
             } catch (Throwable e) {
                 JOptionPane.showMessageDialog(

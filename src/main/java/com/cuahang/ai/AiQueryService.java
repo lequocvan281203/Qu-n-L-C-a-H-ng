@@ -5,6 +5,7 @@ import de.kherud.llama.InferenceParameters;
 import de.kherud.llama.LlamaModel;
 import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
+import com.cuahang.service.ModelDownloadService;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -139,6 +140,9 @@ public class AiQueryService {
 
         for (Path dir : candidates) {
             if (!Files.isDirectory(dir)) continue;
+            Path expected = dir.resolve(ModelDownloadService.MODEL_FILE_NAME);
+            if (Files.isRegularFile(expected)) return expected;
+
             try (var stream = Files.list(dir)) {
                 var found = stream
                     .filter(p -> Files.isRegularFile(p))
