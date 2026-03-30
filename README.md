@@ -41,6 +41,10 @@
 - Nếu MySQL user có quyền, app sẽ tự tạo database `quanlycuahang` khi chạy lần đầu.
 - Nếu bảng `TaiKhoan` trống, app sẽ tự tạo tài khoản mặc định: `admin / 123456`.
 
+## Tài khoản demo
+- Admin: `admin / 123456`
+- User: `user1 / 123456`
+
 ## Seed dữ liệu demo (SQL)
 - File: `sql/seed_demo.sql`
 - Chạy trong MySQL Workbench để có đủ dữ liệu test CRUD/POS/AI.
