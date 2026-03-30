@@ -19,7 +19,7 @@ call .\mvnw.cmd clean package
 if errorlevel 1 exit /b 1
 
 set "APP_NAME=QuanLyCuaHang"
-set "OUT_DIR=dist"
+set "OUT_DIR=dist-installer"
 
 for /f "delims=" %%i in ('dir /b /o:-d "target\*shaded.jar" 2^>nul') do set "JAR_BASENAME=%%i" & goto :found
 :found
@@ -28,10 +28,10 @@ if "%JAR_BASENAME%"=="" (
   exit /b 1
 )
 
-if exist "%OUT_DIR%\%APP_NAME%" rmdir /s /q "%OUT_DIR%\%APP_NAME%"
+if exist "%OUT_DIR%" rmdir /s /q "%OUT_DIR%"
 
-"%JAVA_HOME%\bin\jpackage.exe" --type app-image --name "%APP_NAME%" --input target --main-jar "%JAR_BASENAME%" --dest "%OUT_DIR%" --app-version 0.0.1
+"%JAVA_HOME%\bin\jpackage.exe" --type exe --name "%APP_NAME%" --input target --main-jar "%JAR_BASENAME%" --main-class com.cuahang.main.MainApp --dest "%OUT_DIR%" --app-version 0.0.1
 
 echo.
-echo Da tao app portable tai: %OUT_DIR%\%APP_NAME%
+echo Da tao installer EXE tai: %OUT_DIR%
 pause

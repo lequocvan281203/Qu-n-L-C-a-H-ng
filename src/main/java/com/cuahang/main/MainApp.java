@@ -38,7 +38,8 @@ public class MainApp {
                     );
                 }
 
-                new ModelDownloadService().ensureModelPresent(Path.of("models"));
+                Path modelsDir = Path.of(System.getProperty("user.dir"), "models");
+                new ModelDownloadService().ensureModelPresent(modelsDir);
                 new LoginView().setVisible(true);
             } catch (Throwable e) {
                 JOptionPane.showMessageDialog(

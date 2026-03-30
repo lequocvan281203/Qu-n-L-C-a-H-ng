@@ -55,6 +55,11 @@
 - Chạy: `BUILD_PORTABLE_APP.bat`
 - Output: `dist/QuanLyCuaHang/` (mang đi copy máy khác chạy).
 
+## Build installer .exe
+- Yêu cầu: JDK 22 (có `jpackage`).
+- Chạy: `BUILD_INSTALLER_EXE.bat`
+- Output: `dist-installer/` (bên trong có file installer `.exe`).
+
 ## Kế hoạch triển khai
 - File chi tiết: [_workspace/plan/Kế hoạch Code Chi tiết.md](file:///d:/desktop/ltr%20win/Quan-ly-cua-hang/_workspace/plan/K%E1%BA%BF%20ho%E1%BA%A1ch%20Code%20Chi%20ti%E1%BA%BFt.md)
 - Bao gồm: DAO/Service, UI (FlatLaf), tích hợp AI Text-to-SQL, test & build.

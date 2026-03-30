@@ -6,7 +6,9 @@ import de.kherud.llama.LlamaModel;
 import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
 import com.cuahang.service.ModelDownloadService;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,8 +48,15 @@ public class AiQueryService {
         Path modelPath = resolveModelPath();
         String prompt = buildPrompt(userInput);
 
+        validateModelFile(modelPath);
+
         ModelParameters modelParams = new ModelParameters().setModel(modelPath.toString());
-        InferenceParameters inferParams = new InferenceParameters(prompt).setTemperature(0.1f);
+        InferenceParameters inferParams = new InferenceParameters(prompt)
+            .setUseChatTemplate(false)
+            .setTemperature(0.1f)
+            .setTopP(0.95f)
+            .setNPredict(192)
+            .setStopStrings("\n", "```", "<|im_end|>");
 
         StringBuilder sb = new StringBuilder();
         try (LlamaModel model = new LlamaModel(modelParams)) {
@@ -55,6 +64,8 @@ public class AiQueryService {
             for (LlamaOutput output : outputs) {
                 sb.append(output);
             }
+        } catch (RuntimeException e) {
+            throw new IllegalStateException(buildModelLoadError(modelPath, e), e);
         }
 
         String raw = sb.toString().trim();
@@ -122,6 +133,7 @@ public class AiQueryService {
     }
 
     private static Path resolveModelPath() {
+        Path userDir = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
         String override = System.getProperty("cuahang.modelPath");
         if (override != null && !override.isBlank()) {
             Path p = Paths.get(override);
@@ -132,7 +144,9 @@ public class AiQueryService {
         }
 
         List<Path> candidates = List.of(
+            userDir.resolve("models"),
             Paths.get("models").normalize(),
+            userDir.getParent() != null ? userDir.getParent().resolve("models") : Paths.get("..", "models").normalize(),
             Paths.get("..", "models").normalize(),
             Paths.get("..", "_workspace", "models").normalize(),
             Paths.get("..", "..", "models").normalize()
@@ -156,6 +170,48 @@ public class AiQueryService {
 
         throw new IllegalStateException(
             "Không tìm thấy model .gguf. Hãy đặt model vào ../models hoặc đặt -Dcuahang.modelPath=..."
+        );
+    }
+
+    private static void validateModelFile(Path modelPath) {
+        try {
+            if (!Files.isRegularFile(modelPath)) {
+                throw new IllegalStateException("Model không tồn tại: " + modelPath);
+            }
+            long size = Files.size(modelPath);
+            if (size < 50L * 1024 * 1024) {
+                throw new IllegalStateException("Model quá nhỏ (có thể tải lỗi): " + modelPath + " (" + size + " bytes)");
+            }
+            try (InputStream in = new BufferedInputStream(Files.newInputStream(modelPath))) {
+                byte[] head = new byte[4];
+                int n = in.read(head);
+                if (n <= 0) {
+                    throw new IllegalStateException("Không đọc được model: " + modelPath);
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể truy cập model: " + modelPath + " (" + e.getMessage() + ")", e);
+        }
+    }
+
+    private static String buildModelLoadError(Path modelPath, RuntimeException e) {
+        long size = -1;
+        try {
+            size = Files.isRegularFile(modelPath) ? Files.size(modelPath) : -1;
+        } catch (IOException ignored) {
+        }
+
+        return String.join(
+            "\n",
+            "Không load được model GGUF.",
+            "- Model: " + modelPath.toAbsolutePath(),
+            "- Size: " + (size >= 0 ? size + " bytes" : "unknown"),
+            "- WorkingDir: " + Path.of(System.getProperty("user.dir")).toAbsolutePath(),
+            "Gợi ý:",
+            "- Đảm bảo file không bị lỗi (tải đủ ~1.3GB).",
+            "- Nếu chạy bằng .exe, hãy đặt model vào thư mục 'models' cạnh file .exe.",
+            "- Có thể thử đặt đường dẫn model ngắn, không dấu cách và set -Dcuahang.modelPath=...",
+            "Chi tiết: " + e.getMessage()
         );
     }
 }
