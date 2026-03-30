@@ -51,6 +51,24 @@ public class MainApp {
             );
         }
 
+        if (containsIgnoreCase(msg, "Public Key Retrieval is not allowed")) {
+            return String.join(
+                "\n",
+                "MySQL từ chối xác thực (Public Key Retrieval is not allowed).",
+                "- Sửa JDBC URL trong src/main/resources/hibernate.cfg.xml và thêm: allowPublicKeyRetrieval=true",
+                "\nChi tiết: " + msg
+            );
+        }
+
+        if (containsIgnoreCase(msg, "Communications link failure") || containsIgnoreCase(msg, "Connection refused")) {
+            return String.join(
+                "\n",
+                "Không kết nối được MySQL (có thể MySQL chưa chạy).",
+                "- Hãy bật MySQL service hoặc mở MySQL Workbench để kiểm tra",
+                "\nChi tiết: " + msg
+            );
+        }
+
         return "Không thể kết nối CSDL. Vui lòng kiểm tra MySQL/hibernate.cfg.xml.\n\nChi tiết: " + msg;
     }
 
