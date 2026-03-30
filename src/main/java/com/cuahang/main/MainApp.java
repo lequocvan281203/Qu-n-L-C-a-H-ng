@@ -1,6 +1,7 @@
 package com.cuahang.main;
 
 import com.cuahang.view.LoginView;
+import com.cuahang.service.BootstrapService;
 import com.formdev.flatlaf.FlatLightLaf;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
@@ -14,6 +15,15 @@ public class MainApp {
 
         SwingUtilities.invokeLater(() -> {
             try (Session ignored = HibernateUtil.getSessionFactory().openSession()) {
+                boolean created = new BootstrapService().ensureDefaultAdmin();
+                if (created) {
+                    JOptionPane.showMessageDialog(
+                        null,
+                        "Đã tạo tài khoản mặc định: admin / 123456",
+                        "Tài khoản mặc định",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
                 new LoginView().setVisible(true);
             } catch (Throwable e) {
                 JOptionPane.showMessageDialog(
