@@ -2,6 +2,7 @@ package com.cuahang.view;
 
 import com.cuahang.entity.TaiKhoan;
 import com.cuahang.service.AuthService;
+import com.cuahang.view.MainForm;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -81,7 +82,7 @@ public class LoginView extends JFrame {
                     Optional<TaiKhoan> tk = get();
                     if (tk.isPresent()) {
                         dispose();
-                        new MainDashboard(tk.get()).setVisible(true);
+                        new MainForm(tk.get()).setVisible(true);
                     } else {
                         JOptionPane.showMessageDialog(LoginView.this, "Sai tài khoản hoặc mật khẩu.", "Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
                     }
@@ -92,4 +93,3 @@ public class LoginView extends JFrame {
         }.execute();
     }
 }
-

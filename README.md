@@ -41,6 +41,10 @@
 - Nếu MySQL user có quyền, app sẽ tự tạo database `quanlycuahang` khi chạy lần đầu.
 - Nếu bảng `TaiKhoan` trống, app sẽ tự tạo tài khoản mặc định: `admin / 123456`.
 
+## Seed dữ liệu demo (SQL)
+- File: `sql/seed_demo.sql`
+- Chạy trong MySQL Workbench để có đủ dữ liệu test CRUD/POS/AI.
+
 ## AI GGUF (Text-to-SQL)
 - Model đang dùng: `qwen2.5-1.5b-instruct-q5_k_m.gguf`
 - Đặt file vào thư mục dự án: `Qu-n-L-C-a-H-ng/models/qwen2.5-1.5b-instruct-q5_k_m.gguf`
