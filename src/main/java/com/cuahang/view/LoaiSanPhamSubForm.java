@@ -1,7 +1,7 @@
 package com.cuahang.view;
 
-import com.cuahang.entity.KhachHang;
-import com.cuahang.service.KhachHangService;
+import com.cuahang.entity.LoaiSanPham;
+import com.cuahang.service.LoaiSanPhamService;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -19,8 +19,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
-public class KhachHangSubForm extends SubForm {
-    private final KhachHangService service = new KhachHangService();
+public class LoaiSanPhamSubForm extends SubForm {
+    private final LoaiSanPhamService service = new LoaiSanPhamService();
     private final boolean editable;
 
     private final JTextField searchField = new JTextField(30);
@@ -30,15 +30,13 @@ public class KhachHangSubForm extends SubForm {
     private final JButton deleteButton = new JButton("Xóa");
     private final JButton refreshButton = new JButton("Tải lại");
 
-    private final DefaultTableModel model = new DefaultTableModel(
-        new Object[] {"MaKH", "TenKH", "SoDT", "DiemTichLuy"},
-        0
-    );
+    private final DefaultTableModel model = new DefaultTableModel(new Object[] {"MaLoai", "TenLoai"}, 0);
     private final JTable table = new JTable(model);
 
-    public KhachHangSubForm(boolean editable) {
-        super("Khách hàng (CRUD)");
+    public LoaiSanPhamSubForm(boolean editable) {
+        super("Loại sản phẩm (CRUD)");
         this.editable = editable;
+
         setLayout(new BorderLayout());
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -72,9 +70,9 @@ public class KhachHangSubForm extends SubForm {
     private void load() {
         searchButton.setEnabled(false);
         refreshButton.setEnabled(false);
-        new SwingWorker<List<KhachHang>, Void>() {
+        new SwingWorker<List<LoaiSanPham>, Void>() {
             @Override
-            protected List<KhachHang> doInBackground() {
+            protected List<LoaiSanPham> doInBackground() {
                 return service.search(searchField.getText());
             }
 
@@ -84,55 +82,52 @@ public class KhachHangSubForm extends SubForm {
                 refreshButton.setEnabled(true);
                 model.setRowCount(0);
                 try {
-                    for (KhachHang kh : get()) {
-                        model.addRow(new Object[] {kh.getMaKH(), kh.getTenKH(), kh.getSoDT(), kh.getDiemTichLuy()});
+                    for (LoaiSanPham l : get()) {
+                        model.addRow(new Object[] {l.getMaLoai(), l.getTenLoai()});
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(KhachHangSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(LoaiSanPhamSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
     }
 
-    private KhachHang getSelected() {
+    private LoaiSanPham getSelected() {
         int row = table.getSelectedRow();
         if (row < 0) return null;
-        String maKH = String.valueOf(model.getValueAt(row, 0));
-        return service.findById(maKH).orElse(null);
+        String maLoai = String.valueOf(model.getValueAt(row, 0));
+        return service.findById(maLoai).orElse(null);
     }
 
     private void deleteSelected() {
-        KhachHang kh = getSelected();
-        if (kh == null) {
-            JOptionPane.showMessageDialog(this, "Chọn 1 khách hàng để xóa.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
+        if (!editable) return;
+        LoaiSanPham l = getSelected();
+        if (l == null) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 loại để xóa.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int ok = JOptionPane.showConfirmDialog(this, "Xóa khách hàng " + kh.getMaKH() + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        int ok = JOptionPane.showConfirmDialog(this, "Xóa loại " + l.getMaLoai() + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (ok != JOptionPane.YES_OPTION) return;
         try {
-            service.deleteById(kh.getMaKH());
+            service.deleteById(l.getMaLoai());
             load();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void openEditor(KhachHang editing) {
+    private void openEditor(LoaiSanPham editing) {
         if (!editable) return;
         boolean isNew = editing == null;
-        KhachHang kh = isNew ? new KhachHang() : editing;
+        LoaiSanPham l = isNew ? new LoaiSanPham() : editing;
 
-        JTextField maKH = new JTextField(15);
-        JTextField tenKH = new JTextField(25);
-        JTextField soDT = new JTextField(15);
-        JTextField diem = new JTextField(10);
+        JTextField maLoai = new JTextField(15);
+        JTextField tenLoai = new JTextField(25);
 
         if (!isNew) {
-            maKH.setText(kh.getMaKH());
-            maKH.setEnabled(false);
-            tenKH.setText(kh.getTenKH());
-            soDT.setText(kh.getSoDT());
-            diem.setText(String.valueOf(kh.getDiemTichLuy()));
+            maLoai.setText(l.getMaLoai());
+            maLoai.setEnabled(false);
+            tenLoai.setText(l.getTenLoai());
         }
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -141,31 +136,18 @@ public class KhachHangSubForm extends SubForm {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        form.add(new JLabel("MaKH"), gbc);
+        form.add(new JLabel("MaLoai"), gbc);
         gbc.gridx = 1;
-        form.add(maKH, gbc);
-
+        form.add(maLoai, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
-        form.add(new JLabel("TenKH"), gbc);
+        form.add(new JLabel("TenLoai"), gbc);
         gbc.gridx = 1;
-        form.add(tenKH, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        form.add(new JLabel("SoDT"), gbc);
-        gbc.gridx = 1;
-        form.add(soDT, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        form.add(new JLabel("DiemTichLuy"), gbc);
-        gbc.gridx = 1;
-        form.add(diem, gbc);
+        form.add(tenLoai, gbc);
 
         JDialog dialog = new JDialog();
         dialog.setModal(true);
-        dialog.setTitle(isNew ? "Thêm khách hàng" : "Sửa khách hàng");
+        dialog.setTitle(isNew ? "Thêm loại" : "Sửa loại");
         dialog.setLayout(new BorderLayout());
         dialog.add(form, BorderLayout.CENTER);
         JButton ok = new JButton("Lưu");
@@ -181,17 +163,14 @@ public class KhachHangSubForm extends SubForm {
         ok.addActionListener(e -> {
             try {
                 if (isNew) {
-                    String id = maKH.getText().trim();
-                    if (id.isBlank()) throw new IllegalArgumentException("MaKH không được rỗng");
-                    kh.setMaKH(id);
+                    String id = maLoai.getText().trim();
+                    if (id.isBlank()) throw new IllegalArgumentException("MaLoai không được rỗng");
+                    l.setMaLoai(id);
                 }
-                String name = tenKH.getText().trim();
-                if (name.isBlank()) throw new IllegalArgumentException("TenKH không được rỗng");
-                kh.setTenKH(name);
-                kh.setSoDT(soDT.getText().trim());
-                String d = diem.getText().trim();
-                kh.setDiemTichLuy(d.isBlank() ? 0 : Integer.parseInt(d));
-                service.saveOrUpdate(kh);
+                String name = tenLoai.getText().trim();
+                if (name.isBlank()) throw new IllegalArgumentException("TenLoai không được rỗng");
+                l.setTenLoai(name);
+                service.saveOrUpdate(l);
                 dialog.dispose();
                 load();
             } catch (Exception ex) {
@@ -202,3 +181,4 @@ public class KhachHangSubForm extends SubForm {
         dialog.setVisible(true);
     }
 }
+

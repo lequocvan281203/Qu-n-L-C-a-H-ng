@@ -24,6 +24,7 @@ import javax.swing.table.DefaultTableModel;
 
 public class SanPhamSubForm extends SubForm {
     private final SanPhamService service = new SanPhamService();
+    private final boolean editable;
 
     private final JTextField searchField = new JTextField(30);
     private final JButton searchButton = new JButton("Tìm");
@@ -38,8 +39,9 @@ public class SanPhamSubForm extends SubForm {
     );
     private final JTable table = new JTable(model);
 
-    public SanPhamSubForm() {
+    public SanPhamSubForm(boolean editable) {
         super("Sản phẩm (CRUD)");
+        this.editable = editable;
         setLayout(new BorderLayout());
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -62,6 +64,10 @@ public class SanPhamSubForm extends SubForm {
         addButton.addActionListener(e -> openEditor(null));
         editButton.addActionListener(e -> openEditor(getSelected()));
         deleteButton.addActionListener(e -> deleteSelected());
+
+        addButton.setEnabled(editable);
+        editButton.setEnabled(editable);
+        deleteButton.setEnabled(editable);
 
         load();
     }
@@ -126,6 +132,7 @@ public class SanPhamSubForm extends SubForm {
     }
 
     private void openEditor(SanPham editing) {
+        if (!editable) return;
         boolean isNew = editing == null;
         SanPham sp = isNew ? new SanPham() : editing;
 
@@ -264,4 +271,3 @@ public class SanPhamSubForm extends SubForm {
         }
     }
 }
-

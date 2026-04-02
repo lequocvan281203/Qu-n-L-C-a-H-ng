@@ -13,6 +13,11 @@ import org.hibernate.Session;
 import com.cuahang.util.HibernateUtil;
 
 public class MainApp {
+    /**
+     * Entry point của ứng dụng.
+     *
+     * @param args tham số dòng lệnh
+     */
     public static void main(String[] args) {
         FlatLightLaf.setup();
 
@@ -22,7 +27,7 @@ public class MainApp {
                 if (created) {
                     JOptionPane.showMessageDialog(
                         null,
-                        "Đã tạo tài khoản mặc định: admin / 123456",
+                        "Đã tạo tài khoản demo:\n- admin / 123456 (Admin)\n- user / 123456 (User)",
                         "Tài khoản mặc định",
                         JOptionPane.INFORMATION_MESSAGE
                     );

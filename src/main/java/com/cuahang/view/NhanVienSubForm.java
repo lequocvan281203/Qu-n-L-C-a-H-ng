@@ -1,12 +1,14 @@
 package com.cuahang.view;
 
-import com.cuahang.entity.KhachHang;
-import com.cuahang.service.KhachHangService;
+import com.cuahang.entity.NhanVien;
+import com.cuahang.service.NhanVienService;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -19,8 +21,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
-public class KhachHangSubForm extends SubForm {
-    private final KhachHangService service = new KhachHangService();
+public class NhanVienSubForm extends SubForm {
+    private final NhanVienService service = new NhanVienService();
     private final boolean editable;
 
     private final JTextField searchField = new JTextField(30);
@@ -31,13 +33,14 @@ public class KhachHangSubForm extends SubForm {
     private final JButton refreshButton = new JButton("Tải lại");
 
     private final DefaultTableModel model = new DefaultTableModel(
-        new Object[] {"MaKH", "TenKH", "SoDT", "DiemTichLuy"},
+        new Object[] {"MaNV", "HoTen", "NgaySinh", "SoDT", "ChucVu"},
         0
     );
     private final JTable table = new JTable(model);
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public KhachHangSubForm(boolean editable) {
-        super("Khách hàng (CRUD)");
+    public NhanVienSubForm(boolean editable) {
+        super("Nhân viên (CRUD)");
         this.editable = editable;
         setLayout(new BorderLayout());
 
@@ -72,9 +75,10 @@ public class KhachHangSubForm extends SubForm {
     private void load() {
         searchButton.setEnabled(false);
         refreshButton.setEnabled(false);
-        new SwingWorker<List<KhachHang>, Void>() {
+
+        new SwingWorker<List<NhanVien>, Void>() {
             @Override
-            protected List<KhachHang> doInBackground() {
+            protected List<NhanVien> doInBackground() {
                 return service.search(searchField.getText());
             }
 
@@ -84,55 +88,69 @@ public class KhachHangSubForm extends SubForm {
                 refreshButton.setEnabled(true);
                 model.setRowCount(0);
                 try {
-                    for (KhachHang kh : get()) {
-                        model.addRow(new Object[] {kh.getMaKH(), kh.getTenKH(), kh.getSoDT(), kh.getDiemTichLuy()});
+                    for (NhanVien nv : get()) {
+                        model.addRow(
+                            new Object[] {
+                                nv.getMaNV(),
+                                nv.getHoTen(),
+                                nv.getNgaySinh() != null ? dateFormat.format(nv.getNgaySinh()) : "",
+                                nv.getSoDT(),
+                                nv.getChucVu()
+                            }
+                        );
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(KhachHangSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(NhanVienSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
     }
 
-    private KhachHang getSelected() {
+    private NhanVien getSelected() {
         int row = table.getSelectedRow();
         if (row < 0) return null;
-        String maKH = String.valueOf(model.getValueAt(row, 0));
-        return service.findById(maKH).orElse(null);
+        String maNV = String.valueOf(model.getValueAt(row, 0));
+        return service.findById(maNV).orElse(null);
     }
 
     private void deleteSelected() {
-        KhachHang kh = getSelected();
-        if (kh == null) {
-            JOptionPane.showMessageDialog(this, "Chọn 1 khách hàng để xóa.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
+        NhanVien nv = getSelected();
+        if (nv == null) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 nhân viên để xóa.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int ok = JOptionPane.showConfirmDialog(this, "Xóa khách hàng " + kh.getMaKH() + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        int ok = JOptionPane.showConfirmDialog(this, "Xóa nhân viên " + nv.getMaNV() + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (ok != JOptionPane.YES_OPTION) return;
         try {
-            service.deleteById(kh.getMaKH());
+            service.deleteById(nv.getMaNV());
             load();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void openEditor(KhachHang editing) {
+    private void openEditor(NhanVien editing) {
         if (!editable) return;
         boolean isNew = editing == null;
-        KhachHang kh = isNew ? new KhachHang() : editing;
+        NhanVien nv = isNew ? new NhanVien() : editing;
 
-        JTextField maKH = new JTextField(15);
-        JTextField tenKH = new JTextField(25);
+        JTextField maNV = new JTextField(15);
+        JTextField hoTen = new JTextField(25);
+        JTextField ngaySinh = new JTextField(15);
         JTextField soDT = new JTextField(15);
-        JTextField diem = new JTextField(10);
+        JTextField chucVu = new JTextField(15);
 
         if (!isNew) {
-            maKH.setText(kh.getMaKH());
-            maKH.setEnabled(false);
-            tenKH.setText(kh.getTenKH());
-            soDT.setText(kh.getSoDT());
-            diem.setText(String.valueOf(kh.getDiemTichLuy()));
+            maNV.setText(nv.getMaNV());
+            maNV.setEnabled(false);
+            hoTen.setText(nv.getHoTen());
+            if (nv.getNgaySinh() != null) {
+                ngaySinh.setText(dateFormat.format(nv.getNgaySinh()));
+            }
+            soDT.setText(nv.getSoDT());
+            chucVu.setText(nv.getChucVu());
+        } else {
+            ngaySinh.setText("2000-01-01");
         }
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -141,15 +159,21 @@ public class KhachHangSubForm extends SubForm {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        form.add(new JLabel("MaKH"), gbc);
+        form.add(new JLabel("MaNV"), gbc);
         gbc.gridx = 1;
-        form.add(maKH, gbc);
+        form.add(maNV, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
-        form.add(new JLabel("TenKH"), gbc);
+        form.add(new JLabel("HoTen"), gbc);
         gbc.gridx = 1;
-        form.add(tenKH, gbc);
+        form.add(hoTen, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        form.add(new JLabel("NgaySinh (yyyy-MM-dd)"), gbc);
+        gbc.gridx = 1;
+        form.add(ngaySinh, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -159,13 +183,13 @@ public class KhachHangSubForm extends SubForm {
 
         gbc.gridx = 0;
         gbc.gridy++;
-        form.add(new JLabel("DiemTichLuy"), gbc);
+        form.add(new JLabel("ChucVu"), gbc);
         gbc.gridx = 1;
-        form.add(diem, gbc);
+        form.add(chucVu, gbc);
 
         JDialog dialog = new JDialog();
         dialog.setModal(true);
-        dialog.setTitle(isNew ? "Thêm khách hàng" : "Sửa khách hàng");
+        dialog.setTitle(isNew ? "Thêm nhân viên" : "Sửa nhân viên");
         dialog.setLayout(new BorderLayout());
         dialog.add(form, BorderLayout.CENTER);
         JButton ok = new JButton("Lưu");
@@ -181,17 +205,29 @@ public class KhachHangSubForm extends SubForm {
         ok.addActionListener(e -> {
             try {
                 if (isNew) {
-                    String id = maKH.getText().trim();
-                    if (id.isBlank()) throw new IllegalArgumentException("MaKH không được rỗng");
-                    kh.setMaKH(id);
+                    String id = maNV.getText().trim();
+                    if (id.isBlank()) throw new IllegalArgumentException("MaNV không được rỗng");
+                    nv.setMaNV(id);
                 }
-                String name = tenKH.getText().trim();
-                if (name.isBlank()) throw new IllegalArgumentException("TenKH không được rỗng");
-                kh.setTenKH(name);
-                kh.setSoDT(soDT.getText().trim());
-                String d = diem.getText().trim();
-                kh.setDiemTichLuy(d.isBlank() ? 0 : Integer.parseInt(d));
-                service.saveOrUpdate(kh);
+                String name = hoTen.getText().trim();
+                if (name.isBlank()) throw new IllegalArgumentException("HoTen không được rỗng");
+                nv.setHoTen(name);
+                
+                String dateStr = ngaySinh.getText().trim();
+                if (!dateStr.isBlank()) {
+                    try {
+                        nv.setNgaySinh(dateFormat.parse(dateStr));
+                    } catch (ParseException ex) {
+                        throw new IllegalArgumentException("Ngày sinh không đúng định dạng yyyy-MM-dd");
+                    }
+                } else {
+                    nv.setNgaySinh(null);
+                }
+                
+                nv.setSoDT(soDT.getText().trim());
+                nv.setChucVu(chucVu.getText().trim());
+                
+                service.saveOrUpdate(nv);
                 dialog.dispose();
                 load();
             } catch (Exception ex) {

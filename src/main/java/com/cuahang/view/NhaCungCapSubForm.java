@@ -1,7 +1,7 @@
 package com.cuahang.view;
 
-import com.cuahang.entity.KhachHang;
-import com.cuahang.service.KhachHangService;
+import com.cuahang.entity.NhaCungCap;
+import com.cuahang.service.NhaCungCapService;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -19,8 +19,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
-public class KhachHangSubForm extends SubForm {
-    private final KhachHangService service = new KhachHangService();
+public class NhaCungCapSubForm extends SubForm {
+    private final NhaCungCapService service = new NhaCungCapService();
     private final boolean editable;
 
     private final JTextField searchField = new JTextField(30);
@@ -31,13 +31,13 @@ public class KhachHangSubForm extends SubForm {
     private final JButton refreshButton = new JButton("Tải lại");
 
     private final DefaultTableModel model = new DefaultTableModel(
-        new Object[] {"MaKH", "TenKH", "SoDT", "DiemTichLuy"},
+        new Object[] {"MaNCC", "TenNCC", "DiaChi", "Email"},
         0
     );
     private final JTable table = new JTable(model);
 
-    public KhachHangSubForm(boolean editable) {
-        super("Khách hàng (CRUD)");
+    public NhaCungCapSubForm(boolean editable) {
+        super("Nhà cung cấp (CRUD)");
         this.editable = editable;
         setLayout(new BorderLayout());
 
@@ -72,9 +72,10 @@ public class KhachHangSubForm extends SubForm {
     private void load() {
         searchButton.setEnabled(false);
         refreshButton.setEnabled(false);
-        new SwingWorker<List<KhachHang>, Void>() {
+
+        new SwingWorker<List<NhaCungCap>, Void>() {
             @Override
-            protected List<KhachHang> doInBackground() {
+            protected List<NhaCungCap> doInBackground() {
                 return service.search(searchField.getText());
             }
 
@@ -84,55 +85,62 @@ public class KhachHangSubForm extends SubForm {
                 refreshButton.setEnabled(true);
                 model.setRowCount(0);
                 try {
-                    for (KhachHang kh : get()) {
-                        model.addRow(new Object[] {kh.getMaKH(), kh.getTenKH(), kh.getSoDT(), kh.getDiemTichLuy()});
+                    for (NhaCungCap ncc : get()) {
+                        model.addRow(
+                            new Object[] {
+                                ncc.getMaNCC(),
+                                ncc.getTenNCC(),
+                                ncc.getDiaChi(),
+                                ncc.getEmail()
+                            }
+                        );
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(KhachHangSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(NhaCungCapSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
     }
 
-    private KhachHang getSelected() {
+    private NhaCungCap getSelected() {
         int row = table.getSelectedRow();
         if (row < 0) return null;
-        String maKH = String.valueOf(model.getValueAt(row, 0));
-        return service.findById(maKH).orElse(null);
+        String maNCC = String.valueOf(model.getValueAt(row, 0));
+        return service.findById(maNCC).orElse(null);
     }
 
     private void deleteSelected() {
-        KhachHang kh = getSelected();
-        if (kh == null) {
-            JOptionPane.showMessageDialog(this, "Chọn 1 khách hàng để xóa.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
+        NhaCungCap ncc = getSelected();
+        if (ncc == null) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 nhà cung cấp để xóa.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int ok = JOptionPane.showConfirmDialog(this, "Xóa khách hàng " + kh.getMaKH() + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        int ok = JOptionPane.showConfirmDialog(this, "Xóa nhà cung cấp " + ncc.getMaNCC() + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (ok != JOptionPane.YES_OPTION) return;
         try {
-            service.deleteById(kh.getMaKH());
+            service.deleteById(ncc.getMaNCC());
             load();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void openEditor(KhachHang editing) {
+    private void openEditor(NhaCungCap editing) {
         if (!editable) return;
         boolean isNew = editing == null;
-        KhachHang kh = isNew ? new KhachHang() : editing;
+        NhaCungCap ncc = isNew ? new NhaCungCap() : editing;
 
-        JTextField maKH = new JTextField(15);
-        JTextField tenKH = new JTextField(25);
-        JTextField soDT = new JTextField(15);
-        JTextField diem = new JTextField(10);
+        JTextField maNCC = new JTextField(15);
+        JTextField tenNCC = new JTextField(25);
+        JTextField diaChi = new JTextField(30);
+        JTextField email = new JTextField(20);
 
         if (!isNew) {
-            maKH.setText(kh.getMaKH());
-            maKH.setEnabled(false);
-            tenKH.setText(kh.getTenKH());
-            soDT.setText(kh.getSoDT());
-            diem.setText(String.valueOf(kh.getDiemTichLuy()));
+            maNCC.setText(ncc.getMaNCC());
+            maNCC.setEnabled(false);
+            tenNCC.setText(ncc.getTenNCC());
+            diaChi.setText(ncc.getDiaChi());
+            email.setText(ncc.getEmail());
         }
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -141,31 +149,31 @@ public class KhachHangSubForm extends SubForm {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        form.add(new JLabel("MaKH"), gbc);
+        form.add(new JLabel("MaNCC"), gbc);
         gbc.gridx = 1;
-        form.add(maKH, gbc);
+        form.add(maNCC, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
-        form.add(new JLabel("TenKH"), gbc);
+        form.add(new JLabel("TenNCC"), gbc);
         gbc.gridx = 1;
-        form.add(tenKH, gbc);
+        form.add(tenNCC, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
-        form.add(new JLabel("SoDT"), gbc);
+        form.add(new JLabel("DiaChi"), gbc);
         gbc.gridx = 1;
-        form.add(soDT, gbc);
+        form.add(diaChi, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
-        form.add(new JLabel("DiemTichLuy"), gbc);
+        form.add(new JLabel("Email"), gbc);
         gbc.gridx = 1;
-        form.add(diem, gbc);
+        form.add(email, gbc);
 
         JDialog dialog = new JDialog();
         dialog.setModal(true);
-        dialog.setTitle(isNew ? "Thêm khách hàng" : "Sửa khách hàng");
+        dialog.setTitle(isNew ? "Thêm nhà cung cấp" : "Sửa nhà cung cấp");
         dialog.setLayout(new BorderLayout());
         dialog.add(form, BorderLayout.CENTER);
         JButton ok = new JButton("Lưu");
@@ -181,17 +189,18 @@ public class KhachHangSubForm extends SubForm {
         ok.addActionListener(e -> {
             try {
                 if (isNew) {
-                    String id = maKH.getText().trim();
-                    if (id.isBlank()) throw new IllegalArgumentException("MaKH không được rỗng");
-                    kh.setMaKH(id);
+                    String id = maNCC.getText().trim();
+                    if (id.isBlank()) throw new IllegalArgumentException("MaNCC không được rỗng");
+                    ncc.setMaNCC(id);
                 }
-                String name = tenKH.getText().trim();
-                if (name.isBlank()) throw new IllegalArgumentException("TenKH không được rỗng");
-                kh.setTenKH(name);
-                kh.setSoDT(soDT.getText().trim());
-                String d = diem.getText().trim();
-                kh.setDiemTichLuy(d.isBlank() ? 0 : Integer.parseInt(d));
-                service.saveOrUpdate(kh);
+                String name = tenNCC.getText().trim();
+                if (name.isBlank()) throw new IllegalArgumentException("TenNCC không được rỗng");
+                ncc.setTenNCC(name);
+                
+                ncc.setDiaChi(diaChi.getText().trim());
+                ncc.setEmail(email.getText().trim());
+                
+                service.saveOrUpdate(ncc);
                 dialog.dispose();
                 load();
             } catch (Exception ex) {

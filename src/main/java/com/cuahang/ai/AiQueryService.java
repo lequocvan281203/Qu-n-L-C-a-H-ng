@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import org.hibernate.Session;
 
 public class AiQueryService {
@@ -42,6 +43,16 @@ public class AiQueryService {
         ChiTietHoaDon(MaCTHD PK AI, MaHD FK->HoaDon.MaHD, MaSP FK->SanPham.MaSP, SoLuong, DonGia, UNIQUE(MaHD, MaSP))
         """;
 
+    private static final int DEFAULT_LIMIT = 200;
+    private static final AtomicReference<ModelHolder> MODEL_HOLDER = new AtomicReference<>();
+    private static final Object MODEL_LOCK = new Object();
+
+    /**
+     * Sinh câu SQL (MySQL) từ câu hỏi tiếng Việt bằng model GGUF chạy CPU.
+     *
+     * @param userInput câu hỏi tự nhiên
+     * @return câu SQL đã được kiểm tra an toàn (chỉ SELECT/WITH, 1 câu lệnh)
+     */
     public String generateSqlFromText(String userInput) {
         Objects.requireNonNull(userInput, "userInput");
 
@@ -50,7 +61,6 @@ public class AiQueryService {
 
         validateModelFile(modelPath);
 
-        ModelParameters modelParams = new ModelParameters().setModel(modelPath.toString());
         InferenceParameters inferParams = new InferenceParameters(prompt)
             .setUseChatTemplate(false)
             .setTemperature(0.1f)
@@ -59,10 +69,13 @@ public class AiQueryService {
             .setStopStrings("\n", "```", "<|im_end|>");
 
         StringBuilder sb = new StringBuilder();
-        try (LlamaModel model = new LlamaModel(modelParams)) {
-            Iterable<LlamaOutput> outputs = model.generate(inferParams);
-            for (LlamaOutput output : outputs) {
-                sb.append(output);
+        try {
+            LlamaModel model = getOrCreateModel(modelPath);
+            synchronized (MODEL_LOCK) {
+                Iterable<LlamaOutput> outputs = model.generate(inferParams);
+                for (LlamaOutput output : outputs) {
+                    sb.append(output);
+                }
             }
         } catch (RuntimeException e) {
             throw new IllegalStateException(buildModelLoadError(modelPath, e), e);
@@ -72,6 +85,12 @@ public class AiQueryService {
         return sanitizeAndValidateSql(raw);
     }
 
+    /**
+     * Thực thi SELECT đã được kiểm tra an toàn và trả về dữ liệu dạng bảng.
+     *
+     * @param sql câu lệnh SQL (chỉ SELECT/WITH)
+     * @return dữ liệu cột + dòng
+     */
     public AiQueryResult executeSelectQuery(String sql) {
         String safeSql = sanitizeAndValidateSql(sql);
 
@@ -106,6 +125,12 @@ public class AiQueryService {
         return SYSTEM_PROMPT + "\n\nCâu hỏi: " + userInput.trim() + "\nSQL:";
     }
 
+    /**
+     * Làm sạch và kiểm tra an toàn câu SQL trước khi chạy.
+     *
+     * @param sql câu SQL đầu vào (có thể chứa markdown/code fence)
+     * @return câu SQL sạch, 1 câu lệnh, chỉ SELECT/WITH và có LIMIT
+     */
     private static String sanitizeAndValidateSql(String sql) {
         String cleaned = sql
             .replace("```sql", "")
@@ -117,16 +142,43 @@ public class AiQueryService {
             cleaned = cleaned.substring(0, semi).trim();
         }
 
+        if (cleaned.length() > 2000) {
+            throw new IllegalArgumentException("SQL quá dài, vui lòng hỏi cụ thể hơn.");
+        }
+
         String upper = cleaned.toUpperCase(Locale.ROOT);
         if (!(upper.startsWith("SELECT") || upper.startsWith("WITH"))) {
             throw new IllegalArgumentException("Chỉ cho phép câu lệnh SELECT/WITH.");
         }
 
-        String[] forbidden = {"INSERT ", "UPDATE ", "DELETE ", "DROP ", "ALTER ", "CREATE ", "TRUNCATE ", "REPLACE ", "GRANT ", "REVOKE "};
+        String[] forbidden = {
+            "INSERT ",
+            "UPDATE ",
+            "DELETE ",
+            "DROP ",
+            "ALTER ",
+            "CREATE ",
+            "TRUNCATE ",
+            "REPLACE ",
+            "GRANT ",
+            "REVOKE ",
+            "LOAD DATA",
+            "LOAD_FILE",
+            "INTO OUTFILE",
+            "INTO DUMPFILE",
+            "--",
+            "/*",
+            "*/",
+            "#"
+        };
         for (String kw : forbidden) {
             if (upper.contains(kw)) {
                 throw new IllegalArgumentException("SQL chứa từ khóa bị cấm: " + kw.trim());
             }
+        }
+
+        if (!upper.contains("LIMIT")) {
+            cleaned = cleaned + " LIMIT " + DEFAULT_LIMIT;
         }
 
         return cleaned;
@@ -173,6 +225,38 @@ public class AiQueryService {
         );
     }
 
+    private static LlamaModel getOrCreateModel(Path modelPath) {
+        ModelHolder holder = MODEL_HOLDER.get();
+        if (holder != null && holder.modelPath.equals(modelPath) && holder.model != null) {
+            return holder.model;
+        }
+        synchronized (MODEL_LOCK) {
+            holder = MODEL_HOLDER.get();
+            if (holder != null && holder.modelPath.equals(modelPath) && holder.model != null) {
+                return holder.model;
+            }
+
+            if (holder != null && holder.model != null) {
+                try {
+                    holder.model.close();
+                } catch (Exception ignored) {
+                }
+            }
+
+            int cores = Runtime.getRuntime().availableProcessors();
+            int threads = Math.max(1, cores - 1);
+
+            ModelParameters modelParams = new ModelParameters()
+                .setModel(modelPath.toString())
+                .setGpuLayers(0)
+                .setThreads(threads);
+
+            LlamaModel model = new LlamaModel(modelParams);
+            MODEL_HOLDER.set(new ModelHolder(modelPath, model));
+            return model;
+        }
+    }
+
     private static void validateModelFile(Path modelPath) {
         try {
             if (!Files.isRegularFile(modelPath)) {
@@ -213,5 +297,8 @@ public class AiQueryService {
             "- Có thể thử đặt đường dẫn model ngắn, không dấu cách và set -Dcuahang.modelPath=...",
             "Chi tiết: " + e.getMessage()
         );
+    }
+
+    private record ModelHolder(Path modelPath, LlamaModel model) {
     }
 }
