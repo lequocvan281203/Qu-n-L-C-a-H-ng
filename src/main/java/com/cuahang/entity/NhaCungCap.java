@@ -2,9 +2,17 @@ package com.cuahang.entity;
 
 import jakarta.persistence.*;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "NhaCungCap")
+@Getter
+@Setter
+/**
+ * Thực thể Nhà cung cấp (bảng NhaCungCap).
+ * Lưu thông tin nhà cung cấp và liên kết đến danh sách sản phẩm.
+ */
 public class NhaCungCap {
     @Id
     @Column(name = "MaNCC", length = 50)

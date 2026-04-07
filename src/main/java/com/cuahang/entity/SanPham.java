@@ -2,9 +2,17 @@ package com.cuahang.entity;
 
 import jakarta.persistence.*;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "SanPham")
+@Getter
+@Setter
+/**
+ * Thực thể Sản phẩm (bảng SanPham).
+ * Lưu thông tin sản phẩm, giá bán, đơn vị tính, tồn kho và liên kết đến loại sản phẩm/nhà cung cấp.
+ */
 public class SanPham {
     @Id
     @Column(name = "MaSP", length = 50)

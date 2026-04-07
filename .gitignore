@@ -1,0 +1,10 @@
+target/
+.classpath
+.project
+.settings/
+
+dist/
+dist-installer/
+
+models/*.gguf
+*.gguf

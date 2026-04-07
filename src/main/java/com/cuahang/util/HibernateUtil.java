@@ -1,5 +1,7 @@
 package com.cuahang.util;
 
+import java.util.Properties;
+import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
@@ -9,7 +11,14 @@ public class HibernateUtil {
     private static SessionFactory buildSessionFactory() {
         try {
             // Tự động đọc file hibernate.cfg.xml cấu hình ở trên
-            return new Configuration().configure().buildSessionFactory();
+            Configuration cfg = new Configuration().configure();
+            Properties props = cfg.getProperties();
+            DatabaseBootstrap.ensureDatabaseExists(
+                props.getProperty("hibernate.connection.url"),
+                props.getProperty("hibernate.connection.username"),
+                props.getProperty("hibernate.connection.password")
+            );
+            return cfg.buildSessionFactory();
         } catch (Throwable ex) {
             System.err.println("Khởi tạo SessionFactory thất bại: " + ex);
             throw new ExceptionInInitializerError(ex);
@@ -21,6 +30,13 @@ public class HibernateUtil {
     }
 
     public static void shutdown() {
-        getSessionFactory().close();
+        try {
+            getSessionFactory().close();
+        } finally {
+            try {
+                AbandonedConnectionCleanupThread.checkedShutdown();
+            } catch (Exception ignored) {
+            }
+        }
     }
 }
