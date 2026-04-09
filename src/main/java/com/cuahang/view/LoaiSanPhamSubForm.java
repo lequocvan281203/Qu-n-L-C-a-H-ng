@@ -37,7 +37,6 @@ public class LoaiSanPhamSubForm extends SubForm {
         super("Loại sản phẩm (CRUD)");
         this.editable = editable;
 
-        setLayout(new BorderLayout());
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(new JLabel("Từ khóa:"));
@@ -50,6 +49,12 @@ public class LoaiSanPhamSubForm extends SubForm {
 
         add(top, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
+
+        UiDefaults.styleActionButton(addButton);
+        UiDefaults.styleActionButton(editButton);
+        UiDefaults.styleActionButton(deleteButton);
+        UiDefaults.styleActionButton(searchButton);
+        UiDefaults.styleActionButton(refreshButton);
 
         searchButton.addActionListener(e -> load());
         refreshButton.addActionListener(e -> {
@@ -181,4 +186,3 @@ public class LoaiSanPhamSubForm extends SubForm {
         dialog.setVisible(true);
     }
 }
-

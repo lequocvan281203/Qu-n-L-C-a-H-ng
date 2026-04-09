@@ -59,6 +59,12 @@ public class HoaDonSubForm extends SubForm {
         add(top, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
+        UiDefaults.styleActionButton(addButton);
+        UiDefaults.styleActionButton(editButton);
+        UiDefaults.styleActionButton(deleteButton);
+        UiDefaults.styleActionButton(searchButton);
+        UiDefaults.styleActionButton(refreshButton);
+
         searchButton.addActionListener(e -> load());
         refreshButton.addActionListener(e -> {
             searchField.setText("");
