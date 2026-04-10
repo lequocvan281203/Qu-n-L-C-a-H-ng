@@ -93,7 +93,7 @@ public class AiQueryService {
      * @return dữ liệu cột + dòng
      */
     public AiQueryResult executeSelectQuery(String sql) {
-        String safeSql = sanitizeAndValidateSql(sql);
+        String safeSql = sanitizeSql(sql);
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.doReturningWork(conn -> {
@@ -124,6 +124,10 @@ public class AiQueryService {
 
     private static String buildPrompt(String userInput) {
         return SYSTEM_PROMPT + "\n\nCâu hỏi: " + userInput.trim() + "\nSQL:";
+    }
+
+    public String sanitizeSql(String sql) {
+        return sanitizeAndValidateSql(sql);
     }
 
     /**
