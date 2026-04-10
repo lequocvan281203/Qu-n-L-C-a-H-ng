@@ -5,6 +5,7 @@ import com.cuahang.entity.NhaCungCap;
 import com.cuahang.entity.SanPham;
 import com.cuahang.service.SanPhamService;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -20,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class SanPhamSubForm extends SubForm {
@@ -38,23 +40,50 @@ public class SanPhamSubForm extends SubForm {
         0
     );
     private final JTable table = new JTable(model);
+    private final JLabel statusLabel = new JLabel(" ");
 
     public SanPhamSubForm(boolean editable) {
         super("Sản phẩm (CRUD)");
         this.editable = editable;
         setLayout(new BorderLayout());
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(new JLabel("Từ khóa:"));
-        top.add(searchField);
-        top.add(searchButton);
-        top.add(addButton);
-        top.add(editButton);
-        top.add(deleteButton);
-        top.add(refreshButton);
+        searchField.putClientProperty("JTextField.placeholderText", "Tìm theo mã hoặc tên sản phẩm...");
+        searchField.setPreferredSize(new Dimension(320, 32));
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        searchPanel.add(new JLabel("Từ khóa"));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        searchPanel.add(refreshButton);
+
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        actionsPanel.add(addButton);
+        actionsPanel.add(editButton);
+        actionsPanel.add(deleteButton);
+
+        JPanel top = new JPanel(new BorderLayout(8, 0));
+        top.setBorder(new EmptyBorder(8, 10, 8, 10));
+        top.add(searchPanel, BorderLayout.WEST);
+        top.add(actionsPanel, BorderLayout.EAST);
 
         add(top, BorderLayout.NORTH);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(table);
+        add(scroll, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setBorder(new EmptyBorder(6, 10, 8, 10));
+        bottom.add(statusLabel, BorderLayout.WEST);
+        add(bottom, BorderLayout.SOUTH);
+
+        table.setAutoCreateRowSorter(true);
+        table.setFillsViewportHeight(true);
+        table.getColumnModel().getColumn(0).setPreferredWidth(80);
+        table.getColumnModel().getColumn(1).setPreferredWidth(240);
+        table.getColumnModel().getColumn(2).setPreferredWidth(90);
+        table.getColumnModel().getColumn(3).setPreferredWidth(90);
+        table.getColumnModel().getColumn(4).setPreferredWidth(90);
+        table.getColumnModel().getColumn(5).setPreferredWidth(70);
+        table.getColumnModel().getColumn(6).setPreferredWidth(70);
 
         UiDefaults.styleActionButton(addButton);
         UiDefaults.styleActionButton(editButton);
@@ -94,7 +123,8 @@ public class SanPhamSubForm extends SubForm {
                 refreshButton.setEnabled(true);
                 model.setRowCount(0);
                 try {
-                    for (SanPham sp : get()) {
+                    List<SanPham> list = get();
+                    for (SanPham sp : list) {
                         model.addRow(
                             new Object[] {
                                 sp.getMaSP(),
@@ -107,6 +137,7 @@ public class SanPhamSubForm extends SubForm {
                             }
                         );
                     }
+                    statusLabel.setText("Tổng: " + list.size() + " sản phẩm");
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(SanPhamSubForm.this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }

@@ -45,15 +45,18 @@ public final class UiDefaults {
         if (text.equalsIgnoreCase("Xóa") || text.equalsIgnoreCase("Xoa")) {
             b.setForeground(Color.WHITE);
             b.setBackground(new Color(0xDC2626));
-            b.putClientProperty("FlatLaf.style", "arc: 12; margin: 7,14,7,14; fontStyle: bold");
+            b.setFont(b.getFont().deriveFont(Font.BOLD));
+            b.putClientProperty("FlatLaf.style", "arc: 12; margin: 7,14,7,14");
         } else if (text.equalsIgnoreCase("Thêm") || text.equalsIgnoreCase("Them")) {
             b.setForeground(Color.WHITE);
             b.setBackground(new Color(0x16A34A));
-            b.putClientProperty("FlatLaf.style", "arc: 12; margin: 7,14,7,14; fontStyle: bold");
+            b.setFont(b.getFont().deriveFont(Font.BOLD));
+            b.putClientProperty("FlatLaf.style", "arc: 12; margin: 7,14,7,14");
         } else if (text.equalsIgnoreCase("Sửa") || text.equalsIgnoreCase("Sua")) {
             b.setForeground(Color.WHITE);
             b.setBackground(new Color(0xF59E0B));
-            b.putClientProperty("FlatLaf.style", "arc: 12; margin: 7,14,7,14; fontStyle: bold");
+            b.setFont(b.getFont().deriveFont(Font.BOLD));
+            b.putClientProperty("FlatLaf.style", "arc: 12; margin: 7,14,7,14");
         }
     }
 }

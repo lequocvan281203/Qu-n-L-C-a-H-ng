@@ -4,6 +4,7 @@ import com.cuahang.ai.AiQueryResult;
 import com.cuahang.ai.AiQueryService;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
@@ -46,6 +47,10 @@ public class AiChatPanel extends JPanel {
         chatArea.setEditable(false);
         sqlArea.setEditable(false);
         sqlArea.setRows(5);
+        inputField.putClientProperty("JTextField.placeholderText", "Nhập câu hỏi, ví dụ: Top 5 sản phẩm bán chạy...");
+        sendButton.putClientProperty("FlatLaf.style", "arc: 12");
+        sendButton.setFont(sendButton.getFont().deriveFont(java.awt.Font.BOLD));
+        insertSampleButton.putClientProperty("FlatLaf.style", "arc: 12");
 
         JScrollPane chatScroll = new JScrollPane(chatArea);
 
@@ -57,11 +62,16 @@ public class AiChatPanel extends JPanel {
         split.setResizeWeight(0.55);
         add(split, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        bottom.add(sampleBox);
-        bottom.add(insertSampleButton);
-        bottom.add(inputField);
-        bottom.add(sendButton);
+        sampleBox.setPreferredSize(new Dimension(260, sampleBox.getPreferredSize().height));
+
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        left.add(sampleBox);
+        left.add(insertSampleButton);
+
+        JPanel bottom = new JPanel(new BorderLayout(8, 0));
+        bottom.add(left, BorderLayout.WEST);
+        bottom.add(inputField, BorderLayout.CENTER);
+        bottom.add(sendButton, BorderLayout.EAST);
         add(bottom, BorderLayout.SOUTH);
 
         resultTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

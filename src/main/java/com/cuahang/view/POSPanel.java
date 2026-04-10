@@ -5,19 +5,20 @@ import com.cuahang.entity.SanPham;
 import com.cuahang.service.BanHangService;
 import com.cuahang.service.dto.PurchaseItem;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
@@ -32,108 +33,157 @@ public class POSPanel extends JPanel {
         0
     );
     private final JTable productTable = new JTable(productTableModel);
+    private final JTextField productSearchField = new JTextField(24);
 
     private final JTextField maHDField = new JTextField(12);
     private final JTextField maKHField = new JTextField(12);
     private final JTextField maNVField = new JTextField(12);
 
-    private final JTextField maSPField = new JTextField(12);
     private final JTextField soLuongField = new JTextField(6);
 
-    private final DefaultListModel<String> cartListModel = new DefaultListModel<>();
-    private final JList<String> cartList = new JList<>(cartListModel);
+    private final DefaultTableModel cartTableModel = new DefaultTableModel(
+        new Object[] {"MaSP", "TenSP", "DonGia", "SoLuong", "ThanhTien"},
+        0
+    );
+    private final JTable cartTable = new JTable(cartTableModel);
     private final List<PurchaseItem> cartItems = new ArrayList<>();
 
-    private final JButton refreshButton = new JButton("Tải lại sản phẩm");
-    private final JButton addToCartButton = new JButton("Thêm vào giỏ");
+    private final JButton refreshButton = new JButton("Tải lại");
+    private final JButton addToCartButton = new JButton("Thêm");
+    private final JButton removeFromCartButton = new JButton("Xóa");
     private final JButton createInvoiceButton = new JButton("Tạo hóa đơn");
     private final JButton clearCartButton = new JButton("Xóa giỏ");
+    private final JLabel totalLabel = new JLabel("Tổng tiền: 0");
+    private final NumberFormat currency = NumberFormat.getInstance();
 
     public POSPanel() {
         setLayout(new BorderLayout());
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(refreshButton);
-        add(top, BorderLayout.NORTH);
+        productSearchField.putClientProperty("JTextField.placeholderText", "Tìm sản phẩm (mã/tên)...");
+        productSearchField.setPreferredSize(new Dimension(280, 32));
 
-        add(new JScrollPane(productTable), BorderLayout.CENTER);
+        productTable.setAutoCreateRowSorter(true);
+        productTable.setFillsViewportHeight(true);
+        productTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        productTable.getColumnModel().getColumn(1).setPreferredWidth(220);
+        productTable.getColumnModel().getColumn(2).setPreferredWidth(90);
+        productTable.getColumnModel().getColumn(3).setPreferredWidth(90);
+        productTable.getColumnModel().getColumn(4).setPreferredWidth(90);
+
+        cartTable.setFillsViewportHeight(true);
+        cartTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        cartTable.getColumnModel().getColumn(1).setPreferredWidth(220);
+        cartTable.getColumnModel().getColumn(2).setPreferredWidth(90);
+        cartTable.getColumnModel().getColumn(3).setPreferredWidth(70);
+        cartTable.getColumnModel().getColumn(4).setPreferredWidth(110);
+
+        UiDefaults.styleActionButton(addToCartButton);
+        UiDefaults.styleActionButton(removeFromCartButton);
+        UiDefaults.styleActionButton(clearCartButton);
+        createInvoiceButton.putClientProperty("FlatLaf.style", "arc: 12");
+        createInvoiceButton.setFont(createInvoiceButton.getFont().deriveFont(java.awt.Font.BOLD));
+
+        JPanel left = new JPanel(new BorderLayout());
+        left.add(buildProductToolbar(), BorderLayout.NORTH);
+        left.add(new JScrollPane(productTable), BorderLayout.CENTER);
+        left.add(buildAddToCartBar(), BorderLayout.SOUTH);
 
         JPanel right = new JPanel(new BorderLayout());
-        right.add(buildOrderForm(), BorderLayout.NORTH);
-        right.add(new JScrollPane(cartList), BorderLayout.CENTER);
+        right.add(buildOrderHeader(), BorderLayout.NORTH);
+        right.add(new JScrollPane(cartTable), BorderLayout.CENTER);
+        right.add(buildCheckoutBar(), BorderLayout.SOUTH);
 
-        JPanel rightActions = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        rightActions.add(createInvoiceButton);
-        rightActions.add(clearCartButton);
-        right.add(rightActions, BorderLayout.SOUTH);
-
-        add(right, BorderLayout.EAST);
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
+        split.setResizeWeight(0.6);
+        add(split, BorderLayout.CENTER);
 
         refreshButton.addActionListener(e -> loadProducts());
-        addToCartButton.addActionListener(e -> addToCart());
+        addToCartButton.addActionListener(e -> addSelectedToCart());
+        removeFromCartButton.addActionListener(e -> removeSelectedFromCart());
         clearCartButton.addActionListener(e -> clearCart());
         createInvoiceButton.addActionListener(e -> createInvoice());
+        productSearchField.addActionListener(e -> loadProducts());
 
         productTable.getSelectionModel().addListSelectionListener(e -> {
             int row = productTable.getSelectedRow();
             if (row >= 0) {
-                Object ma = productTableModel.getValueAt(row, 0);
-                if (ma != null) maSPField.setText(ma.toString());
+                soLuongField.requestFocus();
             }
         });
 
         loadProducts();
     }
 
-    private JPanel buildOrderForm() {
+    private JPanel buildProductToolbar() {
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        left.add(new JLabel("Sản phẩm"));
+        left.add(productSearchField);
+        left.add(refreshButton);
+
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.add(left, BorderLayout.WEST);
+        return wrap;
+    }
+
+    private JPanel buildAddToCartBar() {
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        soLuongField.putClientProperty("JTextField.placeholderText", "SL");
+        soLuongField.setPreferredSize(new Dimension(80, 32));
+        bar.add(new JLabel("Số lượng"));
+        bar.add(soLuongField);
+        bar.add(addToCartButton);
+        bar.add(removeFromCartButton);
+        return bar;
+    }
+
+    private JPanel buildOrderHeader() {
         JPanel form = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.insets = new Insets(6, 6, 6, 6);
         gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        int y = 0;
+        maHDField.putClientProperty("JTextField.placeholderText", "HDxxx");
+        maKHField.putClientProperty("JTextField.placeholderText", "KHxx");
+        maNVField.putClientProperty("JTextField.placeholderText", "NVxx");
 
         gbc.gridx = 0;
-        gbc.gridy = y;
-        form.add(new JLabel("MaHD:"), gbc);
+        gbc.gridy = 0;
+        form.add(new JLabel("MaHD"), gbc);
         gbc.gridx = 1;
         form.add(maHDField, gbc);
 
-        y++;
         gbc.gridx = 0;
-        gbc.gridy = y;
-        form.add(new JLabel("MaKH:"), gbc);
+        gbc.gridy = 1;
+        form.add(new JLabel("MaKH"), gbc);
         gbc.gridx = 1;
         form.add(maKHField, gbc);
 
-        y++;
         gbc.gridx = 0;
-        gbc.gridy = y;
-        form.add(new JLabel("MaNV:"), gbc);
+        gbc.gridy = 2;
+        form.add(new JLabel("MaNV"), gbc);
         gbc.gridx = 1;
         form.add(maNVField, gbc);
 
-        y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        form.add(new JLabel("MaSP:"), gbc);
-        gbc.gridx = 1;
-        form.add(maSPField, gbc);
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.add(form, BorderLayout.CENTER);
+        return wrap;
+    }
 
-        y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        form.add(new JLabel("Số lượng:"), gbc);
-        gbc.gridx = 1;
-        form.add(soLuongField, gbc);
+    private JPanel buildCheckoutBar() {
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        totalLabel.putClientProperty("FlatLaf.style", "font: +1");
+        totalLabel.setFont(totalLabel.getFont().deriveFont(java.awt.Font.BOLD));
+        left.add(totalLabel);
 
-        y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        gbc.gridwidth = 2;
-        form.add(addToCartButton, gbc);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        right.add(clearCartButton);
+        right.add(createInvoiceButton);
 
-        return form;
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.add(left, BorderLayout.WEST);
+        wrap.add(right, BorderLayout.EAST);
+        return wrap;
     }
 
     private void loadProducts() {
@@ -141,7 +191,11 @@ public class POSPanel extends JPanel {
         new SwingWorker<List<SanPham>, Void>() {
             @Override
             protected List<SanPham> doInBackground() {
-                return sanPhamDAO.findAll();
+                String keyword = productSearchField.getText() != null ? productSearchField.getText().trim() : "";
+                if (keyword.isBlank()) {
+                    return sanPhamDAO.findAll();
+                }
+                return sanPhamDAO.search(keyword);
             }
 
             @Override
@@ -167,11 +221,21 @@ public class POSPanel extends JPanel {
         }.execute();
     }
 
-    private void addToCart() {
-        String maSP = maSPField.getText().trim();
+    private void addSelectedToCart() {
+        int viewRow = productTable.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 sản phẩm.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int row = productTable.convertRowIndexToModel(viewRow);
+        String maSP = String.valueOf(productTableModel.getValueAt(row, 0));
+        String tenSP = String.valueOf(productTableModel.getValueAt(row, 1));
+        double gia = Double.parseDouble(String.valueOf(productTableModel.getValueAt(row, 2)));
+        int ton = Integer.parseInt(String.valueOf(productTableModel.getValueAt(row, 4)));
+
         String soLuongText = soLuongField.getText().trim();
-        if (maSP.isBlank() || soLuongText.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Nhập MaSP và số lượng.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+        if (soLuongText.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Nhập số lượng.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -187,15 +251,69 @@ public class POSPanel extends JPanel {
             return;
         }
 
-        PurchaseItem item = new PurchaseItem(maSP, soLuong);
-        cartItems.add(item);
-        cartListModel.addElement(maSP + " x" + soLuong);
+        if (soLuong > ton) {
+            JOptionPane.showMessageDialog(this, "Vượt tồn kho (" + ton + ").", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        boolean merged = false;
+        for (int i = 0; i < cartItems.size(); i++) {
+            PurchaseItem item = cartItems.get(i);
+            if (item.maSP().equals(maSP)) {
+                int newQty = item.soLuong() + soLuong;
+                if (newQty > ton) {
+                    JOptionPane.showMessageDialog(this, "Vượt tồn kho (" + ton + ").", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                cartItems.set(i, new PurchaseItem(maSP, newQty));
+                updateCartRow(i, maSP, tenSP, gia, newQty);
+                merged = true;
+                break;
+            }
+        }
+        if (!merged) {
+            cartItems.add(new PurchaseItem(maSP, soLuong));
+            cartTableModel.addRow(new Object[] {maSP, tenSP, gia, soLuong, gia * soLuong});
+        }
+
+        recalcTotal();
         soLuongField.setText("");
+    }
+
+    private void updateCartRow(int index, String maSP, String tenSP, double gia, int soLuong) {
+        cartTableModel.setValueAt(maSP, index, 0);
+        cartTableModel.setValueAt(tenSP, index, 1);
+        cartTableModel.setValueAt(gia, index, 2);
+        cartTableModel.setValueAt(soLuong, index, 3);
+        cartTableModel.setValueAt(gia * soLuong, index, 4);
+    }
+
+    private void removeSelectedFromCart() {
+        int viewRow = cartTable.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn 1 dòng trong giỏ.", "Thiếu chọn", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int row = cartTable.convertRowIndexToModel(viewRow);
+        String maSP = String.valueOf(cartTableModel.getValueAt(row, 0));
+        cartTableModel.removeRow(row);
+        cartItems.removeIf(i -> i.maSP().equals(maSP));
+        recalcTotal();
     }
 
     private void clearCart() {
         cartItems.clear();
-        cartListModel.clear();
+        cartTableModel.setRowCount(0);
+        recalcTotal();
+    }
+
+    private void recalcTotal() {
+        double sum = 0;
+        for (int r = 0; r < cartTableModel.getRowCount(); r++) {
+            Object v = cartTableModel.getValueAt(r, 4);
+            if (v != null) sum += Double.parseDouble(String.valueOf(v));
+        }
+        totalLabel.setText("Tổng tiền: " + currency.format(sum));
     }
 
     private void createInvoice() {
@@ -232,4 +350,3 @@ public class POSPanel extends JPanel {
         }.execute();
     }
 }
-

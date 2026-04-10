@@ -5,6 +5,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JDesktopPane;
@@ -12,6 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 
 public class MainForm extends JFrame {
@@ -27,6 +30,8 @@ public class MainForm extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1280, 800);
         setLocationRelativeTo(null);
+
+        JPanel header = buildHeader();
 
         JPanel leftMenu = new JPanel();
         leftMenu.setLayout(new javax.swing.BoxLayout(leftMenu, javax.swing.BoxLayout.Y_AXIS));
@@ -83,6 +88,7 @@ public class MainForm extends JFrame {
         }
 
         setLayout(new BorderLayout());
+        add(header, BorderLayout.NORTH);
         add(leftMenu, BorderLayout.WEST);
         add(desktop, BorderLayout.CENTER);
         desktop.setBackground(new Color(0xF1F5F9));
@@ -105,6 +111,31 @@ public class MainForm extends JFrame {
 
         // Open POS by default
         openSingleton(POSSubForm.class, () -> new POSSubForm());
+    }
+
+    private static JPanel buildHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(0x1D4ED8));
+        header.setBorder(new EmptyBorder(12, 18, 12, 18));
+        header.setPreferredSize(new Dimension(1280, 56));
+
+        JLabel title = new JLabel("SMART-MART: HỆ THỐNG QUẢN LÝ THÔNG MINH");
+        title.setForeground(Color.WHITE);
+        title.putClientProperty("FlatLaf.style", "font: +3");
+        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD));
+
+        JLabel time = new JLabel();
+        time.setForeground(Color.WHITE);
+        time.putClientProperty("FlatLaf.style", "font: +1");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Timer timer = new Timer(1000, e -> time.setText(sdf.format(new Date())));
+        timer.setInitialDelay(0);
+        timer.start();
+
+        header.add(title, BorderLayout.WEST);
+        header.add(time, BorderLayout.EAST);
+        return header;
     }
 
     private interface FormFactory {
@@ -136,7 +167,8 @@ public class MainForm extends JFrame {
 
     private static void markPrimary(JButton b) {
         b.setBackground(new Color(0x1D4ED8));
-        b.putClientProperty("FlatLaf.style", "arc: 12; font: +1; fontStyle: bold");
+        b.putClientProperty("FlatLaf.style", "arc: 12; font: +1");
+        b.setFont(b.getFont().deriveFont(java.awt.Font.BOLD));
     }
 
     /**
