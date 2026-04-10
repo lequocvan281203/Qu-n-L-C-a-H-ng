@@ -1,6 +1,7 @@
 package com.cuahang.main;
 
 import com.cuahang.view.LoginView;
+import com.cuahang.view.UiDefaults;
 import com.cuahang.service.BootstrapService;
 import com.cuahang.service.DemoDataService;
 import com.cuahang.service.ModelDownloadService;
@@ -20,6 +21,7 @@ public class MainApp {
      */
     public static void main(String[] args) {
         FlatLightLaf.setup();
+        UiDefaults.apply();
 
         SwingUtilities.invokeLater(() -> {
             try (Session ignored = HibernateUtil.getSessionFactory().openSession()) {

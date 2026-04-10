@@ -33,7 +33,16 @@ if "%JAR_BASENAME%"=="" (
 
 if exist "%OUT_DIR%" rmdir /s /q "%OUT_DIR%"
 
-"%JAVA_HOME%\bin\jpackage.exe" --type exe --name "%APP_NAME%" --input target --main-jar "%JAR_BASENAME%" --main-class com.cuahang.main.MainApp --dest "%OUT_DIR%" --app-version 0.0.1
+set "PKG_INPUT=_pkg_input"
+if exist "%PKG_INPUT%" rmdir /s /q "%PKG_INPUT%"
+mkdir "%PKG_INPUT%"
+copy /y "target\%JAR_BASENAME%" "%PKG_INPUT%\%JAR_BASENAME%" >nul
+if exist "models" (
+  if not exist "%PKG_INPUT%\models" mkdir "%PKG_INPUT%\models"
+  xcopy /e /i /y "models" "%PKG_INPUT%\models" >nul
+)
+
+"%JAVA_HOME%\bin\jpackage.exe" --type exe --name "%APP_NAME%" --input "%PKG_INPUT%" --main-jar "%JAR_BASENAME%" --main-class com.cuahang.main.MainApp --dest "%OUT_DIR%" --app-version 0.0.1
 if errorlevel 1 (
   echo.
   echo Tao installer EXE that bai. Thuong do thieu WiX (candle.exe/light.exe) hoac JDK/jpackage.
@@ -44,6 +53,8 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+
+if exist "%PKG_INPUT%" rmdir /s /q "%PKG_INPUT%"
 
 echo.
 echo Da tao installer EXE tai: %OUT_DIR%

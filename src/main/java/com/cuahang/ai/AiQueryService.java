@@ -9,6 +9,7 @@ import com.cuahang.service.ModelDownloadService;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,7 +93,7 @@ public class AiQueryService {
      * @return dữ liệu cột + dòng
      */
     public AiQueryResult executeSelectQuery(String sql) {
-        String safeSql = sanitizeAndValidateSql(sql);
+        String safeSql = sanitizeSql(sql);
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.doReturningWork(conn -> {
@@ -123,6 +124,10 @@ public class AiQueryService {
 
     private static String buildPrompt(String userInput) {
         return SYSTEM_PROMPT + "\n\nCâu hỏi: " + userInput.trim() + "\nSQL:";
+    }
+
+    public String sanitizeSql(String sql) {
+        return sanitizeAndValidateSql(sql);
     }
 
     /**
@@ -195,7 +200,9 @@ public class AiQueryService {
             return p;
         }
 
+        Path appDir = resolveAppDir();
         List<Path> candidates = List.of(
+            appDir != null ? appDir.resolve("models") : userDir.resolve("models"),
             userDir.resolve("models"),
             Paths.get("models").normalize(),
             userDir.getParent() != null ? userDir.getParent().resolve("models") : Paths.get("..", "models").normalize(),
@@ -223,6 +230,18 @@ public class AiQueryService {
         throw new IllegalStateException(
             "Không tìm thấy model .gguf. Hãy đặt model vào ../models hoặc đặt -Dcuahang.modelPath=..."
         );
+    }
+
+    private static Path resolveAppDir() {
+        try {
+            var url = AiQueryService.class.getProtectionDomain().getCodeSource().getLocation();
+            if (url == null) return null;
+            Path p = Path.of(url.toURI()).toAbsolutePath().normalize();
+            if (Files.isRegularFile(p)) return p.getParent();
+            return p;
+        } catch (URISyntaxException e) {
+            return null;
+        }
     }
 
     private static LlamaModel getOrCreateModel(Path modelPath) {

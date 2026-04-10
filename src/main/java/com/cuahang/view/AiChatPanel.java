@@ -2,8 +2,10 @@ package com.cuahang.view;
 
 import com.cuahang.ai.AiQueryResult;
 import com.cuahang.ai.AiQueryService;
+import com.cuahang.ai.GeminiSqlService;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
@@ -13,6 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JPasswordField;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
@@ -21,6 +24,9 @@ public class AiChatPanel extends JPanel {
     private final JTextArea sqlArea = new JTextArea();
     private final JTextField inputField = new JTextField(50);
     private final JButton sendButton = new JButton("Gửi");
+    private final JComboBox<String> engineBox = new JComboBox<>(new String[] {"Local GGUF", "Gemini API"});
+    private final JTextField modelField = new JTextField("gemini-2.0-flash", 14);
+    private final JPasswordField apiKeyField = new JPasswordField(18);
     private final JComboBox<String> sampleBox = new JComboBox<>(
         new String[] {
             "Top 5 sản phẩm bán chạy",
@@ -36,6 +42,7 @@ public class AiChatPanel extends JPanel {
     private final JTable resultTable = new JTable(tableModel);
 
     private final AiQueryService aiQueryService = new AiQueryService();
+    private final GeminiSqlService geminiSqlService = new GeminiSqlService();
 
     /**
      * Khởi tạo panel AI chat: nhập câu hỏi tự nhiên → sinh SQL → hiển thị bảng kết quả.
@@ -46,6 +53,13 @@ public class AiChatPanel extends JPanel {
         chatArea.setEditable(false);
         sqlArea.setEditable(false);
         sqlArea.setRows(5);
+        inputField.putClientProperty("JTextField.placeholderText", "Nhập câu hỏi, ví dụ: Top 5 sản phẩm bán chạy...");
+        sendButton.putClientProperty("FlatLaf.style", "arc: 12");
+        sendButton.setFont(sendButton.getFont().deriveFont(java.awt.Font.BOLD));
+        insertSampleButton.putClientProperty("FlatLaf.style", "arc: 12");
+        engineBox.putClientProperty("FlatLaf.style", "arc: 12");
+        modelField.putClientProperty("JTextField.placeholderText", "Model (vd: gemini-2.0-flash)");
+        apiKeyField.putClientProperty("JTextField.placeholderText", "Gemini API key");
 
         JScrollPane chatScroll = new JScrollPane(chatArea);
 
@@ -57,17 +71,26 @@ public class AiChatPanel extends JPanel {
         split.setResizeWeight(0.55);
         add(split, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        bottom.add(sampleBox);
-        bottom.add(insertSampleButton);
-        bottom.add(inputField);
-        bottom.add(sendButton);
+        sampleBox.setPreferredSize(new Dimension(260, sampleBox.getPreferredSize().height));
+
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        left.add(engineBox);
+        left.add(modelField);
+        left.add(apiKeyField);
+        left.add(sampleBox);
+        left.add(insertSampleButton);
+
+        JPanel bottom = new JPanel(new BorderLayout(8, 0));
+        bottom.add(left, BorderLayout.WEST);
+        bottom.add(inputField, BorderLayout.CENTER);
+        bottom.add(sendButton, BorderLayout.EAST);
         add(bottom, BorderLayout.SOUTH);
 
         resultTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         sendButton.addActionListener(e -> send());
         inputField.addActionListener(e -> send());
+        engineBox.addActionListener(e -> updateEngineUi());
         insertSampleButton.addActionListener(e -> {
             Object selected = sampleBox.getSelectedItem();
             if (selected != null) {
@@ -75,6 +98,16 @@ public class AiChatPanel extends JPanel {
                 inputField.requestFocus();
             }
         });
+
+        updateEngineUi();
+    }
+
+    private void updateEngineUi() {
+        boolean isGemini = "Gemini API".equals(String.valueOf(engineBox.getSelectedItem()));
+        modelField.setVisible(isGemini);
+        apiKeyField.setVisible(isGemini);
+        revalidate();
+        repaint();
     }
 
     /**
@@ -98,7 +131,14 @@ public class AiChatPanel extends JPanel {
             @Override
             protected AiQueryResult doInBackground() {
                 startedAt = System.currentTimeMillis();
-                sql = aiQueryService.generateSqlFromText(text);
+                if ("Gemini API".equals(String.valueOf(engineBox.getSelectedItem()))) {
+                    String key = new String(apiKeyField.getPassword()).trim();
+                    String model = modelField.getText().trim();
+                    sql = geminiSqlService.generateSql(key, text, model);
+                    sql = aiQueryService.sanitizeSql(sql);
+                } else {
+                    sql = aiQueryService.generateSqlFromText(text);
+                }
                 return aiQueryService.executeSelectQuery(sql);
             }
 
